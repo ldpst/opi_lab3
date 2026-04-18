@@ -1,0 +1,58 @@
+<project name="web-lab-3" default="deploy" basedir=".">
+    <property file="build.properties"/>
+
+    <!-- Импорт либ, которые украдены из кеша градла -->
+    <path id="compile.classpath">
+        <fileset dir="${lib.dir}">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
+
+    <!-- 1. Compile -->
+    <target name="compile">
+        <mkdir dir="${build.dir}"/>
+        <javac srcdir="${src.dir}" 
+               destdir="${build.dir}" 
+               includeantruntime="false">
+            <classpath refid="compile.classpath"/>
+        </javac>
+    </target>
+
+    <!-- 2. Build -->
+    <target name="build" depends="compile">
+        <mkdir dir="${art.dir}"/>
+        <war destfile="${art.dir}/${war.name}" webxml="${webcontent.dir}/${webxml.dest}">
+            <!-- MANIFEST -->
+            <manifest>
+                <attribute name="Manifest-Version" value="1.0"/>
+                <attribute name="Implementation-Version" value="1.0.0"/>
+                <attribute name="Main-Class" value="com.ldpst.Main"/>
+            </manifest>
+
+            <!-- "фронт" -->
+            <fileset dir="${webcontent.dir}"/>
+            <!-- либы -->
+            <lib dir="${lib.dir}"/>
+            <!-- persistence.xml -->
+            <zipfileset dir="${res.dir}" prefix="${webinf.classes.dir}"/>
+            <!-- классы -->
+            <classes dir="${build.dir}"> 
+                <exclude name="classes/**"/>
+                <exclude name="generated/**"/>
+                <exclude name="resources/**"/>
+                <exclude name="libs/**"/>
+                <exclude name="tmp/**"/>
+            </classes>
+        </war>
+    </target>
+
+    <!-- 2.1 Deploy -->
+    <target name="deploy" depends="build">
+        <copy file="${art.dir}/${war.name}" todir="${wildfly.deploy.dir}"/>
+    </target>
+
+    <!-- 3. Clean -->
+    <target name="clean">
+        <delete dir="${build.dir}" />
+    </target>
+</project>
