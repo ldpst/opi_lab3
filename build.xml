@@ -55,4 +55,16 @@
     <target name="clean">
         <delete dir="${build.dir}" />
     </target>
+
+    <!-- 7. Music -->
+    <target name="music" depends="build">
+        <echo message="Playing music in new window"/>
+        <exec executable="cmd">
+            <arg value="/c"/>
+            <arg value="start"/>
+            <arg value="cmd"/>
+            <arg value="/c"/>
+            <arg value="java -cp ${build.dir} ${soundplayer.package} ${antresources.dir}/${build.music.path}"/>
+        </exec>
+    </target>
 </project>
