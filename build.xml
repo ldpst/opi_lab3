@@ -231,6 +231,20 @@
         </xmlvalidate>
     </target>
 
+    <!-- 9. Native2ascii -->
+     <target name="native2ascii">
+        <echo message="Converting files from UTF-8 to ASCII..." />
+        
+        <mkdir dir="${i18n.dir}"/>
+        
+        <native2ascii src="${res.dir}" 
+                      dest="${i18n.dir}" 
+                      includes="**/*.properties" 
+                      encoding="UTF-8" />
+                      
+        <echo message="Convertation success. Moved files to ${build.dir}" />
+    </target>
+
     <!-- 10. Team -->
     <target name="team" depends="get-head">
         <mkdir dir="${work.dir}"/>
