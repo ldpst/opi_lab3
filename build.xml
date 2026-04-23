@@ -1,6 +1,7 @@
 <!DOCTYPE project>
 <project name="web-lab-3" default="deploy" basedir=".">
     <property file="build.properties"/>
+    <property file=".env"/>
 
     <!-- Импорт либ, которые украдены из кеша градла -->
     <path id="compile.classpath">
