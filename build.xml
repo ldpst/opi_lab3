@@ -3,6 +3,12 @@
     <property file="build.properties"/>
     <property file=".env.properties"/>
 
+    <taskdef resource="net/sf/antcontrib/antlib.xml">
+        <classpath>
+            <pathelement location="${lib.dir}/ant-contrib-1.0b3.jar"/>
+        </classpath>
+    </taskdef>
+
     <!-- Импорт либ, которые украдены из кеша градла -->
     <path id="compile.classpath">
         <fileset dir="${lib.dir}">
@@ -223,6 +229,99 @@
                 <exclude name="wildfly-archive.zip/**"/>
             </fileset>
         </xmlvalidate>
+    </target>
+
+    <!-- 10. Team -->
+    <target name="team" depends="get-head">
+        <mkdir dir="${work.dir}"/>
+        <mkdir dir="${svn.rev.dir}"/>
+
+        <scriptdef name="to-int" language="javascript">
+            <attribute name="value"/>
+            <attribute name="result"/>
+            <![CDATA[
+                project.setProperty(attributes.get("result"),
+                    parseInt(attributes.get("value")));
+            ]]>
+        </scriptdef>
+
+        <property name="r1" value="${head.rev}"/>
+        <exec executable="cmd" outputproperty="r2">
+            <arg value="/c"/>
+            <arg value="set /a ${head.rev}-1"/>
+        </exec>
+        <exec executable="cmd" outputproperty="r3">
+            <arg value="/c"/>
+            <arg value="set /a ${head.rev}-2"/>
+        </exec>
+        <exec executable="cmd" outputproperty="r4">
+            <arg value="/c"/>
+            <arg value="set /a ${head.rev}-3"/>
+        </exec>
+
+        <antcall target="build-rev">
+            <param name="rev" value="${r1}"/>
+            <param name="dir" value="1"/>
+        </antcall>
+
+        <antcall target="build-rev">
+            <param name="rev" value="${r2}"/>
+            <param name="dir" value="2"/>
+        </antcall>
+
+        <antcall target="build-rev">
+            <param name="rev" value="${r3}"/>
+            <param name="dir" value="3"/>
+        </antcall>
+
+        <antcall target="build-rev">
+            <param name="rev" value="${r4}"/>
+            <param name="dir" value="4"/>
+        </antcall>
+
+        <zip destfile="${svn.rev.dir}/team.zip">
+            <fileset dir="${svn.rev.dir}" includes="rev_*.war"/>
+        </zip>
+    </target>
+
+    <!-- 10.1 Build revision -->
+    <target name="build-rev">
+        <echo message="Building revision ${rev}"/>
+
+        <property name="checkout.dir" location="${work.dir}/rev_${dir}"/>
+
+        <exec executable="svn">
+            <arg value="checkout"/>
+            <arg value="-r"/>
+            <arg value="${rev}"/>
+            <arg value="${svn.repo.url}"/>
+            <arg value="${checkout.dir}"/>
+        </exec>
+
+        <ant dir="${checkout.dir}" target="build"/>
+
+        <copy todir="${svn.rev.dir}">
+            <fileset dir="${checkout.dir}" includes="**/*.war"/>
+            <globmapper from="*.war" to="rev_${rev}.war"/>
+        </copy>
+    </target>
+
+
+    <!-- 10.2 Get head of revision -->
+    <target name="get-head">
+
+        <exec executable="svn" outputproperty="svn.info">
+            <arg value="info"/>
+            <arg value="${svn.repo.url}"/>
+        </exec>
+
+        <propertyregex property="head.rev"
+                    input="${svn.info}"
+                    regexp="Revision:\s*([0-9]+)"
+                    select="\1"/>
+
+        <echo message="HEAD revision = ${head.rev}"/>
+
     </target>
 
     <!-- 14. Report -->
