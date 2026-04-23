@@ -112,6 +112,89 @@
          trust="true"/>
      </target>
 
+    <!-- 6. Doc -->
+    <target name="doc" depends="checksums,manifest,javadoc">
+        <war destfile="${art.dir}/doc.war" webxml="${webcontent.dir}/${webxml.dest}" manifest="${mf.dir}">
+            <!-- "фронт" -->
+            <fileset dir="${webcontent.dir}">
+                <exclude name="**/*.md5"/>
+                <exclude name="**/*.MD5"/>
+                <exclude name="**/*.sha1"/>
+                <exclude name="**/*.SHA-1"/>
+            </fileset>
+            <!-- либы -->
+            <lib dir="${lib.dir}"/>
+            <!-- persistence.xml -->
+            <zipfileset dir="${res.dir}" prefix="${webinf.classes.dir}"/>
+            <!-- JAVADOC -->
+            <zipfileset dir="${javadoc.dir}" prefix="docs"/>
+            <!-- классы -->
+            <classes dir="${build.dir}"> 
+                <exclude name="classes/**"/>
+                <exclude name="generated/**"/>
+                <exclude name="resources/**"/>
+                <exclude name="libs/**"/>
+                <exclude name="tmp/**"/>
+                <exclude name="test-reports/**"/>
+            </classes>
+        </war>
+
+        <antcall target="clean-checksums"/>
+    </target>
+
+    <!-- 6.1 Checksum -->
+    <target name="checksums">
+        <checksum fileext=".md5" algorithm="MD5">
+            <fileset dir="${src.general.dir}"/>
+        </checksum>
+
+        <checksum fileext=".sha1" algorithm="SHA-1">
+            <fileset dir="${src.general.dir}"/>
+        </checksum>
+    </target>
+
+    <!-- 6.2 Manifest -->
+    <target name="manifest">
+        <checksum totalproperty="project.md5" algorithm="MD5">
+            <fileset dir="${src.general.dir}"/>
+        </checksum>
+
+        <checksum totalproperty="project.sha1" algorithm="SHA-1">
+            <fileset dir="${src.general.dir}"/>
+        </checksum>
+
+        <manifest file="${mf.dir}">
+            <attribute name="MD5-Digest" value="${project.md5}"/>
+            <attribute name="SHA1-Digest" value="${project.sha1}"/>
+        </manifest>
+    </target>
+
+    <!-- 6.3 Javadoc -->
+    <target name="javadoc">
+        <mkdir dir="${javadoc.dir}"/>
+
+        <javadoc destdir="${javadoc.dir}" sourcepath="${src.general.dir}">
+            <classpath refid="test.classpath"/>
+
+            <fileset dir="${src.general.dir}">
+                <include name="**/*.java"/>
+            </fileset>
+        </javadoc>
+    </target>
+
+    <!-- 6.4 Clean checksums -->
+    <target name="clean-checksums">
+        <echo message="Cleaning .md5 and .sha1 files"/>
+        <delete>
+            <fileset dir="${src.general.dir}">
+                <include name="**/*.md5"/>
+                <include name="**/*.sha1"/>
+                <include name="**/*.MD5"/>
+                <include name="**/*.SHA-1"/>
+            </fileset>
+        </delete>
+    </target>
+
     <!-- 7. Music -->
     <target name="music" depends="build">
         <echo message="Playing music in new window"/>
