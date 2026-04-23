@@ -1,7 +1,7 @@
 <!DOCTYPE project>
 <project name="web-lab-3" default="deploy" basedir=".">
     <property file="build.properties"/>
-    <property file=".env"/>
+    <property file=".env.properties"/>
 
     <!-- Импорт либ, которые украдены из кеша градла -->
     <path id="compile.classpath">
@@ -103,6 +103,14 @@
             </not>
         </condition>
     </target>
+
+    <!-- 5. Scp -->
+     <target name="scp" depends="build">
+        <scp file="${art.dir}/${war.name}"
+         port="2222"
+         todir="${helios.user}:${helios.pwd}@${helios.host}:${remote.dir}"
+         trust="true"/>
+     </target>
 
     <!-- 7. Music -->
     <target name="music" depends="build">
