@@ -231,6 +231,20 @@
         </xmlvalidate>
     </target>
 
+    <!-- 9. Native2ascii -->
+     <target name="native2ascii">
+        <echo message="Converting files from UTF-8 to ASCII..." />
+        
+        <mkdir dir="${i18n.dir}"/>
+        
+        <native2ascii src="${res.dir}" 
+                      dest="${i18n.dir}" 
+                      includes="**/*.properties" 
+                      encoding="UTF-8" />
+                      
+        <echo message="Convertation success. Moved files to ${build.dir}" />
+    </target>
+
     <!-- 10. Team -->
     <target name="team" depends="get-head">
         <mkdir dir="${work.dir}"/>
@@ -321,6 +335,152 @@
                     select="\1"/>
 
         <echo message="HEAD revision = ${head.rev}"/>
+
+    </target>
+
+    <!-- 11. Alt -->
+    <target name="alt">
+        <delete dir="${alt.backup.dir}"/>
+        <delete dir="${alt.work.dir}"/>
+
+        <mkdir dir="${alt.backup.dir}"/>
+        <copy todir="${alt.backup.dir}">
+            <fileset dir="${src.general.dir}"/>
+        </copy>
+
+        <mkdir dir="${alt.work.dir}"/>
+        <copy todir="${alt.work.dir}">
+            <fileset dir="${src.general.dir}"/>
+        </copy>
+
+        <loadproperties srcFile="${alt.replace.file}"/>
+
+        <replaceregexp byline="true" flags="g">
+            <fileset dir="${alt.work.dir}">
+                <include name="**/*.java"/>
+                <include name="**/*.xml"/>
+            </fileset>
+
+            <regexp pattern="\b(PlaySound|CheckerBean|CheckerBeanTest|ControllerBean|CurTimeBean|PointBean|BigDecimalConverter|BigDecimalRangeValidator|PointDAO|Main)\b"/>
+            <substitution expression="Alt\1"/>
+        </replaceregexp>
+
+        <move file="${alt.work.dir}/main/java/com/ldpst/Main.java"
+            tofile="${alt.work.dir}/main/java/com/ldpst/AltMain.java"/>
+
+        <move file="${alt.work.dir}/main/java/com/ldpst/ant/PlaySound.java"
+            tofile="${alt.work.dir}/main/java/com/ldpst/ant/AltPlaySound.java"/>
+
+        <move file="${alt.work.dir}/main/java/com/ldpst/beans/CheckerBean.java"
+            tofile="${alt.work.dir}/main/java/com/ldpst/beans/AltCheckerBean.java"/>
+
+        <move file="${alt.work.dir}/main/java/com/ldpst/beans/ControllerBean.java"
+            tofile="${alt.work.dir}/main/java/com/ldpst/beans/AltControllerBean.java"/>
+
+        <move file="${alt.work.dir}/main/java/com/ldpst/beans/CurTimeBean.java"
+            tofile="${alt.work.dir}/main/java/com/ldpst/beans/AltCurTimeBean.java"/>
+
+        <move file="${alt.work.dir}/main/java/com/ldpst/beans/PointBean.java"
+            tofile="${alt.work.dir}/main/java/com/ldpst/beans/AltPointBean.java"/>
+
+        <move file="${alt.work.dir}/main/java/com/ldpst/utils/BigDecimalConverter.java"
+            tofile="${alt.work.dir}/main/java/com/ldpst/utils/AltBigDecimalConverter.java"/>
+
+        <move file="${alt.work.dir}/main/java/com/ldpst/utils/BigDecimalRangeValidator.java"
+            tofile="${alt.work.dir}/main/java/com/ldpst/utils/AltBigDecimalRangeValidator.java"/>
+
+        <move file="${alt.work.dir}/main/java/com/ldpst/utils/PointDAO.java"
+            tofile="${alt.work.dir}/main/java/com/ldpst/utils/AltPointDAO.java"/>
+
+        <move file="${alt.work.dir}/test/java/com/ldpst/beans/CheckerBeanTest.java"
+            tofile="${alt.work.dir}/test/java/com/ldpst/beans/AltCheckerBeanTest.java"/>
+
+        <delete dir="${src.general.dir}"/>
+
+        <copy todir="${src.general.dir}">
+            <fileset dir="${alt.work.dir}"/>
+        </copy>
+        
+        <antcall target="clean"/>
+        <antcall target="build"/>
+
+        <copy file="${art.dir}/${war.name}"
+            tofile="${art.dir}/alt-${war.name}"/>
+
+        <delete dir="${src.general.dir}"/>
+
+        <copy todir="${src.general.dir}">
+            <fileset dir="${alt.backup.dir}"/>
+        </copy>
+
+        <delete dir="${alt.work.dir}"/>
+        <delete dir="${alt.backup.dir}"/>
+        
+        <antcall target="clean"/>
+    </target>
+
+    <!-- 12. Diff -->
+    <target name="diff">
+        <mkdir dir="${temp.dir}" />
+
+        <exec executable="${svn.bin}" output="${svn.status.file}">
+            <arg value="status"/>
+        </exec>
+
+        <loadfile property="svn.status.content"
+                srcFile="${svn.status.file}" />
+
+        <loadfile property="svn.watch.content"
+                srcFile="${svn.watch.file}" />
+
+        <echo message="=== SVN STATUS ==="/>
+        <echo message="${svn.status.content}"/>
+
+        <echo message="=== WATCH LIST ==="/>
+        <echo message="${svn.watch.content}"/>
+
+        <var name="svn.need.commit" value="false"/>
+
+        <for list="${svn.watch.content}"
+            delimiter="${line.separator}"
+            param="watchedFile">
+
+            <sequential>
+                <echo message="Checking: @{watchedFile}" />
+
+                <condition property="match.@{watchedFile}">
+                    <contains string="${svn.status.content}"
+                            substring="@{watchedFile}" />
+                </condition>
+
+                <if>
+                    <isset property="match.@{watchedFile}"/>
+                    <then>
+                        <echo message="CHANGED: @{watchedFile}" />
+                        <var name="svn.need.commit" value="true"/>
+                    </then>
+                </if>
+
+            </sequential>
+
+        </for>
+
+        <if>
+            <equals arg1="${svn.need.commit}" arg2="true"/>
+            <then>
+                <echo message="Commit" />
+
+                <exec executable="${svn.bin}">
+                    <arg value="commit"/>
+                    <arg value="-m"/>
+                    <arg value="${svn.msg}"/>
+                </exec>
+            </then>
+
+            <else>
+                <echo message="No relevant changes detected."/>
+            </else>
+        </if>
 
     </target>
 
