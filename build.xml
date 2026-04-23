@@ -324,6 +324,87 @@
 
     </target>
 
+    <!-- 11. Alt -->
+    <target name="alt">
+        <delete dir="${alt.backup.dir}"/>
+        <delete dir="${alt.work.dir}"/>
+
+        <mkdir dir="${alt.backup.dir}"/>
+        <copy todir="${alt.backup.dir}">
+            <fileset dir="${src.general.dir}"/>
+        </copy>
+
+        <mkdir dir="${alt.work.dir}"/>
+        <copy todir="${alt.work.dir}">
+            <fileset dir="${src.general.dir}"/>
+        </copy>
+
+        <loadproperties srcFile="${alt.replace.file}"/>
+
+        <replaceregexp byline="true" flags="g">
+            <fileset dir="${alt.work.dir}">
+                <include name="**/*.java"/>
+                <include name="**/*.xml"/>
+            </fileset>
+
+            <regexp pattern="\b(PlaySound|CheckerBean|CheckerBeanTest|ControllerBean|CurTimeBean|PointBean|BigDecimalConverter|BigDecimalRangeValidator|PointDAO|Main)\b"/>
+            <substitution expression="Alt\1"/>
+        </replaceregexp>
+
+        <move file="${alt.work.dir}/main/java/com/ldpst/Main.java"
+            tofile="${alt.work.dir}/main/java/com/ldpst/AltMain.java"/>
+
+        <move file="${alt.work.dir}/main/java/com/ldpst/ant/PlaySound.java"
+            tofile="${alt.work.dir}/main/java/com/ldpst/ant/AltPlaySound.java"/>
+
+        <move file="${alt.work.dir}/main/java/com/ldpst/beans/CheckerBean.java"
+            tofile="${alt.work.dir}/main/java/com/ldpst/beans/AltCheckerBean.java"/>
+
+        <move file="${alt.work.dir}/main/java/com/ldpst/beans/ControllerBean.java"
+            tofile="${alt.work.dir}/main/java/com/ldpst/beans/AltControllerBean.java"/>
+
+        <move file="${alt.work.dir}/main/java/com/ldpst/beans/CurTimeBean.java"
+            tofile="${alt.work.dir}/main/java/com/ldpst/beans/AltCurTimeBean.java"/>
+
+        <move file="${alt.work.dir}/main/java/com/ldpst/beans/PointBean.java"
+            tofile="${alt.work.dir}/main/java/com/ldpst/beans/AltPointBean.java"/>
+
+        <move file="${alt.work.dir}/main/java/com/ldpst/utils/BigDecimalConverter.java"
+            tofile="${alt.work.dir}/main/java/com/ldpst/utils/AltBigDecimalConverter.java"/>
+
+        <move file="${alt.work.dir}/main/java/com/ldpst/utils/BigDecimalRangeValidator.java"
+            tofile="${alt.work.dir}/main/java/com/ldpst/utils/AltBigDecimalRangeValidator.java"/>
+
+        <move file="${alt.work.dir}/main/java/com/ldpst/utils/PointDAO.java"
+            tofile="${alt.work.dir}/main/java/com/ldpst/utils/AltPointDAO.java"/>
+
+        <move file="${alt.work.dir}/test/java/com/ldpst/beans/CheckerBeanTest.java"
+            tofile="${alt.work.dir}/test/java/com/ldpst/beans/AltCheckerBeanTest.java"/>
+
+        <delete dir="${src.general.dir}"/>
+
+        <copy todir="${src.general.dir}">
+            <fileset dir="${alt.work.dir}"/>
+        </copy>
+        
+        <antcall target="clean"/>
+        <antcall target="build"/>
+
+        <copy file="${art.dir}/${war.name}"
+            tofile="${art.dir}/alt-${war.name}"/>
+
+        <delete dir="${src.general.dir}"/>
+
+        <copy todir="${src.general.dir}">
+            <fileset dir="${alt.backup.dir}"/>
+        </copy>
+
+        <delete dir="${alt.work.dir}"/>
+        <delete dir="${alt.backup.dir}"/>
+        
+        <antcall target="clean"/>
+    </target>
+
     <!-- 14. Report -->
     <target name="report" depends="test" if="tests.passed">
         <echo message="zxc"/>
