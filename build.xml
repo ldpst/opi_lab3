@@ -405,6 +405,71 @@
         <antcall target="clean"/>
     </target>
 
+    <!-- 12. Diff -->
+    <target name="diff">
+        <mkdir dir="${temp.dir}" />
+
+        <exec executable="${svn.bin}" output="${svn.status.file}">
+            <arg value="status"/>
+        </exec>
+
+        <loadfile property="svn.status.content"
+                srcFile="${svn.status.file}" />
+
+        <loadfile property="svn.watch.content"
+                srcFile="${svn.watch.file}" />
+
+        <echo message="=== SVN STATUS ==="/>
+        <echo message="${svn.status.content}"/>
+
+        <echo message="=== WATCH LIST ==="/>
+        <echo message="${svn.watch.content}"/>
+
+        <var name="svn.need.commit" value="false"/>
+
+        <for list="${svn.watch.content}"
+            delimiter="${line.separator}"
+            param="watchedFile">
+
+            <sequential>
+                <echo message="Checking: @{watchedFile}" />
+
+                <condition property="match.@{watchedFile}">
+                    <contains string="${svn.status.content}"
+                            substring="@{watchedFile}" />
+                </condition>
+
+                <if>
+                    <isset property="match.@{watchedFile}"/>
+                    <then>
+                        <echo message="CHANGED: @{watchedFile}" />
+                        <var name="svn.need.commit" value="true"/>
+                    </then>
+                </if>
+
+            </sequential>
+
+        </for>
+
+        <if>
+            <equals arg1="${svn.need.commit}" arg2="true"/>
+            <then>
+                <echo message="Commit" />
+
+                <exec executable="${svn.bin}">
+                    <arg value="commit"/>
+                    <arg value="-m"/>
+                    <arg value="${svn.msg}"/>
+                </exec>
+            </then>
+
+            <else>
+                <echo message="No relevant changes detected."/>
+            </else>
+        </if>
+
+    </target>
+
     <!-- 14. Report -->
     <target name="report" depends="test" if="tests.passed">
         <echo message="zxc"/>
