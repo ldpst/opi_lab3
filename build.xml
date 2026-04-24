@@ -23,7 +23,9 @@
         <mkdir dir="${build.dir}"/>
         <javac srcdir="${src.dir}" 
                destdir="${build.dir}" 
-               includeantruntime="false">
+               includeantruntime="false"
+               fork="${javac.fork}"
+               executable="${javac.exec}">
             <classpath refid="compile.classpath"/>
         </javac>
         <touch file="${compile.marker}"/>
@@ -39,7 +41,9 @@
         <mkdir dir="${build.test.dir}"/>
         <javac srcdir="${src.test.dir}"
                destdir="${build.test.dir}"
-               includeantruntime="false">
+               includeantruntime="false"
+               fork="${javac.fork}"
+               executable="${javac.exec}">
             <classpath refid="compiled.classpath"/>
         </javac>
     </target>
@@ -648,5 +652,48 @@
             <arg value="-m"/>
             <arg value="Add JUnit test report"/>
         </exec>
+    </target>
+
+    <!-- 15. Env -->
+    <target name="env">
+    
+        <property file="${env.config.file}"/>
+        
+        <fail message="Error: var doesnt exist alt.java.home in file ${env.config.file}">
+            <condition><not><isset property="alt.java.home"/></not></condition>
+        </fail>
+        <fail message="Error: var doesnt exist alt.jvm.args in file ${env.config.file}">
+            <condition><not><isset property="alt.jvm.args"/></not></condition>
+        </fail>
+
+        <property name="alt.javac.exec" value="${alt.java.home}/${javac.bin.path}"/>
+        <property name="alt.java.exec" value="${alt.java.home}/${java.bin.path}"/>
+
+        <echo message="---------------------------------------------------"/>
+        <echo message="Starting build in alt env"/>
+        <echo message="JDK: ${alt.java.home}"/>
+        <echo message="JVM Args: ${alt.jvm.args}"/>
+        <echo message="---------------------------------------------------"/>
+
+        <antcall target="clean"/>
+
+        <antcall target="deploy">
+            <param name="javac.fork" value="true"/>
+            <param name="javac.exec" value="${alt.javac.exec}"/>
+        </antcall>
+
+        <echo message="---------------------------------------------------"/>
+        <echo message="Starting wildfly server"/>
+        <echo message="---------------------------------------------------"/>
+
+        <exec dir="${wildfly.bin.dir}" executable="cmd">
+            <arg value="/c"/>
+            <arg value="standalone.bat"/>
+            <arg value="-c"/>
+            <arg value="standalone.xml"/>
+            
+            <env key="JAVA_HOME" value="${alt.java.home}"/>
+            <env key="JAVA_OPTS" value="${alt.jvm.args}"/>
+        </exec>        
     </target>
 </project>
