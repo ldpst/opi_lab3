@@ -18,12 +18,17 @@
 
     <!-- 1. Compile -->
     <target name="compile">
+        <delete file="${compile.marker}"/> <!-- для отслеживания успеха -->
+        
         <mkdir dir="${build.dir}"/>
         <javac srcdir="${src.dir}" 
                destdir="${build.dir}" 
-               includeantruntime="false">
+               includeantruntime="false"
+               fork="${javac.fork}"
+               executable="${javac.exec}">
             <classpath refid="compile.classpath"/>
         </javac>
+        <touch file="${compile.marker}"/>
     </target>
 
     <path id="compiled.classpath">
@@ -36,7 +41,9 @@
         <mkdir dir="${build.test.dir}"/>
         <javac srcdir="${src.test.dir}"
                destdir="${build.test.dir}"
-               includeantruntime="false">
+               includeantruntime="false"
+               fork="${javac.fork}"
+               executable="${javac.exec}">
             <classpath refid="compiled.classpath"/>
         </javac>
     </target>
@@ -484,6 +491,154 @@
 
     </target>
 
+    <!-- 13. History -->
+    <target name="history.init">
+        <mkdir dir="${temp.dir}"/>
+
+        <exec executable="${svn.bin}" output="${history.log.file}">
+            <arg value="log"/>
+            <arg value="--quiet"/>
+            <arg value="${svn.repo.url}"/>
+        </exec>
+        
+        <echo message="svn log file created"/>
+    </target>
+
+    <target name="history.parse" depends="history.init">
+
+        <loadfile property="svn.revs" srcFile="${history.log.file}">
+            <filterchain>
+                <linecontainsregexp>
+                    <regexp pattern="^r[0-9]+"/>
+                </linecontainsregexp>
+                <replaceregex pattern="r([0-9]+).*" replace="\1,"/>
+                <striplinebreaks/>
+            </filterchain>
+        </loadfile>
+
+        <echo>Parsed revisions: ${svn.revs}</echo>
+    </target>
+
+    <target name="history" depends="history.parse">
+        <antcall target="history.iterate">
+            <param name="revs" value="${svn.revs}"/>
+        </antcall>
+    </target>
+
+    <target name="history.iterate">
+
+        <for list="${revs}" param="rev" delimiter=",">
+            <sequential>
+
+                <echo>==============================</echo>
+                <echo>Checking revision @{rev}</echo>
+
+                <property name="current.work.dir" value="${work.base.dir}/rev-@{rev}"/>
+
+                <delete dir="${current.work.dir}" failonerror="false"/>
+                <mkdir dir="${current.work.dir}"/>
+
+                <exec executable="${svn.bin}" failonerror="true">
+                    <arg value="checkout"/>
+                    <arg value="-r"/>
+                    <arg value="@{rev}"/>
+                    <arg value="${svn.repo.url}"/>
+                    <arg value="${current.work.dir}"/>
+                </exec>
+
+                <delete file="${compile.marker}" failonerror="false"/>
+
+                <trycatch>
+                    <try>
+
+                        <ant dir="${basedir}" target="compile.subant" inheritAll="false">
+
+                            <property name="src.dir" value="${current.work.dir}/src/main/java"/>
+                            <property name="build.dir" value="${current.work.dir}/build/classes"/>
+                            <property name="lib.dir" value="${basedir}/lib"/>
+                            <property name="compile.marker" value="${current.work.dir}/compile.ok"/>
+
+                        </ant>
+
+                    </try>
+
+                    <catch>
+                        <echo>Compile FAILED for revision @{rev}</echo>
+                    </catch>
+                </trycatch>
+
+                <condition property="compile.success">
+                    <available file="${current.work.dir}/compile.ok"/>
+                </condition>
+
+                <echo>Compile success: ${compile.success}</echo>
+
+                <if>
+                    <isset property="compile.success"/>
+                    <then>
+
+                        <property name="good.rev" value="@{rev}"/>
+
+                        <echo>FOUND GOOD REVISION: ${good.rev}</echo>
+
+                        <propertyregex property="bad.rev"
+                            input="${revs}"
+                            regexp=".*@{rev},([0-9]+).*"
+                            replace="\1"/>
+
+                        <echo>First BAD revision: ${bad.rev}</echo>
+
+                        <exec executable="${svn.bin}" output="${history.result.file}">
+                            <arg value="diff"/>
+                            <arg value="-r"/>
+                            <arg value="${good.rev}:${bad.rev}"/>
+                            <arg value="${svn.repo.url}"/>
+                        </exec>
+
+                        <echo>Diff saved to ${history.result.file}</echo>
+
+                        <delete dir="${current.work.dir}" failonerror="false"/>
+
+                        <break/>
+
+                    </then>
+                </if>
+
+                <delete dir="${current.work.dir}" failonerror="false"/>
+
+            </sequential>
+        </for>
+
+    </target>
+
+    <target name="compile.subant">
+
+        <echo>SUBANT COMPILING</echo>
+        <echo>SRC: ${src.dir}</echo>
+        <echo>BUILD: ${build.dir}</echo>
+        <echo>LIB: ${lib.dir}</echo>
+
+        <delete file="${compile.marker}" failonerror="false"/>
+
+        <mkdir dir="${build.dir}"/>
+
+        <javac srcdir="${src.dir}"
+            destdir="${build.dir}"
+            includeantruntime="false">
+
+            <classpath>
+                <fileset dir="${lib.dir}">
+                    <include name="**/*.jar"/>
+                </fileset>
+            </classpath>
+
+        </javac>
+
+        <touch file="${compile.marker}"/>
+
+    </target>
+
+
     <!-- 14. Report -->
     <target name="report" depends="test" if="tests.passed">
         <echo message="zxc"/>
@@ -497,5 +652,48 @@
             <arg value="-m"/>
             <arg value="Add JUnit test report"/>
         </exec>
+    </target>
+
+    <!-- 15. Env -->
+    <target name="env">
+    
+        <property file="${env.config.file}"/>
+        
+        <fail message="Error: var doesnt exist alt.java.home in file ${env.config.file}">
+            <condition><not><isset property="alt.java.home"/></not></condition>
+        </fail>
+        <fail message="Error: var doesnt exist alt.jvm.args in file ${env.config.file}">
+            <condition><not><isset property="alt.jvm.args"/></not></condition>
+        </fail>
+
+        <property name="alt.javac.exec" value="${alt.java.home}/${javac.bin.path}"/>
+        <property name="alt.java.exec" value="${alt.java.home}/${java.bin.path}"/>
+
+        <echo message="---------------------------------------------------"/>
+        <echo message="Starting build in alt env"/>
+        <echo message="JDK: ${alt.java.home}"/>
+        <echo message="JVM Args: ${alt.jvm.args}"/>
+        <echo message="---------------------------------------------------"/>
+
+        <antcall target="clean"/>
+
+        <antcall target="deploy">
+            <param name="javac.fork" value="true"/>
+            <param name="javac.exec" value="${alt.javac.exec}"/>
+        </antcall>
+
+        <echo message="---------------------------------------------------"/>
+        <echo message="Starting wildfly server"/>
+        <echo message="---------------------------------------------------"/>
+
+        <exec dir="${wildfly.bin.dir}" executable="cmd">
+            <arg value="/c"/>
+            <arg value="standalone.bat"/>
+            <arg value="-c"/>
+            <arg value="standalone.xml"/>
+            
+            <env key="JAVA_HOME" value="${alt.java.home}"/>
+            <env key="JAVA_OPTS" value="${alt.jvm.args}"/>
+        </exec>        
     </target>
 </project>
