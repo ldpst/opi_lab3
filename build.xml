@@ -8,6 +8,12 @@
             <pathelement location="${lib.dir}/ant-contrib-1.0b3.jar"/>
         </classpath>
     </taskdef>
+    
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+        <classpath>
+            <pathelement location="lib/ant-contrib-1.0b3.jar"/>
+        </classpath>
+    </taskdef>
 
     <!-- Импорт либ, которые украдены из кеша градла -->
     <path id="compile.classpath">
@@ -83,7 +89,37 @@
         </war>
     </target>
 
-    <!-- 2.1 Deploy -->
+    <!-- 2.1 Build jar -->
+    <target name="buildJar" depends="compile,compileTests">
+        <mkdir dir="${art.dir}"/>
+        
+        <jar destfile="${art.dir}/${jar.name}">
+            <manifest>
+                <attribute name="Manifest-Version" value="1.0"/>
+                <attribute name="Implementation-Version" value="1.0.0"/>
+                <attribute name="Main-Class" value="com.ldpst.Main"/>
+            </manifest>
+
+            <fileset dir="${build.dir}"> 
+                <exclude name="classes/**"/>
+                <exclude name="generated/**"/>
+                <exclude name="resources/**"/>
+                <exclude name="libs/**"/>
+                <exclude name="tmp/**"/>
+                <exclude name="test-reports/**"/>
+            </fileset>
+
+            <zipfileset dir="${res.dir}" prefix="META-INF"/>
+
+            <zipfileset dir="${webcontent.dir}" prefix="webapp"/>
+            
+            <zipfileset file="${webcontent.dir}/${webxml.dest}" prefix="webapp/WEB-INF"/>
+
+            <zipgroupfileset dir="${lib.dir}" includes="**/*.jar" />
+        </jar>
+    </target>
+
+    <!-- 2.2 Deploy -->
     <target name="deploy" depends="build">
         <copy file="${art.dir}/${war.name}" todir="${wildfly.deploy.dir}"/>
     </target>
@@ -99,16 +135,19 @@
         <delete dir="${test.reports.dir}"/>
         <mkdir dir="${test.reports.dir}"/>
 
-        <junit printsummary="yes" haltonfailure="yes">
+        <junitlauncher haltOnFailure="yes" printSummary="yes">
             <classpath refid="test.classpath"/>
             
-            <batchtest fork="yes" todir="${test.reports.dir}">
-                <fileset dir="${build.test.dir}"/>
-            </batchtest>
-
-            <formatter type="plain"/>
-            <formatter type="xml"/>
-        </junit>
+            <testclasses outputdir="${test.reports.dir}">
+                <fileset dir="${build.test.dir}">
+                    <include name="**/*Test.class"/> 
+                    <include name="**/*Tests.class"/>
+                </fileset>
+                
+                <listener type="legacy-plain" sendSysOut="true" sendSysErr="true"/>
+                <listener type="legacy-xml" sendSysOut="true" sendSysErr="true"/>
+            </testclasses>
+        </junitlauncher>
 
         <condition property="tests.passed">
             <not>
@@ -347,83 +386,53 @@
 
     <!-- 11. Alt -->
     <target name="alt">
-        <delete dir="${alt.backup.dir}"/>
-        <delete dir="${alt.work.dir}"/>
+        <delete dir="${alt.dir}"/>
+        <mkdir dir="${alt.src.dir}"/>
+        <mkdir dir="${alt.resources.dir}"/>
+        <mkdir dir="${alt.webapp.dir}"/>
+        <mkdir dir="${alt.build.dir}"/>
 
-        <mkdir dir="${alt.backup.dir}"/>
-        <copy todir="${alt.backup.dir}">
-            <fileset dir="${src.general.dir}"/>
+        <copy todir="${alt.src.dir}">
+            <fileset dir="${java.dir}"/>
+        </copy>
+        <copy todir="${alt.resources.dir}">
+            <fileset dir="${resources.dir}"/>
+        </copy>
+        <copy todir="${alt.webapp.dir}">
+            <fileset dir="${webapp.dir}"/>
+        </copy>
+        <copy todir="${alt.test.dir}">
+            <fileset dir="${src.test.dir}"/>
         </copy>
 
-        <mkdir dir="${alt.work.dir}"/>
-        <copy todir="${alt.work.dir}">
-            <fileset dir="${src.general.dir}"/>
-        </copy>
-
-        <loadproperties srcFile="${alt.replace.file}"/>
-
-        <replaceregexp byline="true" flags="g">
-            <fileset dir="${alt.work.dir}">
+        <replace dir="${alt.dir}" replacefilterfile="${alt.replace.file}" encoding="UTF-8"/>
+        
+        <move todir="${alt.src.dir}" includeemptydirs="false">
+            <fileset dir="${alt.src.dir}">
                 <include name="**/*.java"/>
-                <include name="**/*.xml"/>
             </fileset>
+            <mapper type="regexp" from="^(.*[\\/])?(${alt.classes.list})\.java$$" to="\1Alt\2.java"/>
+        </move>
 
-            <regexp pattern="\b(PlaySound|CheckerBean|CheckerBeanTest|ControllerBean|CurTimeBean|PointBean|BigDecimalConverter|BigDecimalRangeValidator|PointDAO|Main)\b"/>
-            <substitution expression="Alt\1"/>
-        </replaceregexp>
+        <move todir="${alt.test.dir}" includeemptydirs="false">
+            <fileset dir="${alt.test.dir}">
+                <include name="**/*.java"/>
+            </fileset>
+            <mapper type="regexp" from="^(.*[\\/])?(${alt.classes.list})\.java$$" to="\1Alt\2.java"/>
+        </move>
 
-        <move file="${alt.work.dir}/main/java/com/ldpst/Main.java"
-            tofile="${alt.work.dir}/main/java/com/ldpst/AltMain.java"/>
+        <antcall target="build">
+            <param name="java.dir" value="${alt.src.dir}"/>
+            <param name="src.dir" value="${alt.dir}"/> 
+            <param name="build.dir" value="${alt.build.dir}"/>
+            <param name="src.test.dir" value="${alt.test.dir}"/>
+            <param name="build.test.dir" value="${alt.build.test.dir}"/>
+            <param name="res.dir" value="${alt.resources.dir}"/>
+            <param name="webcontent.dir" value="${alt.webapp.dir}"/>
+            <param name="war.name" value="${alt.war.name}"/>
+        </antcall>
 
-        <move file="${alt.work.dir}/main/java/com/ldpst/ant/PlaySound.java"
-            tofile="${alt.work.dir}/main/java/com/ldpst/ant/AltPlaySound.java"/>
-
-        <move file="${alt.work.dir}/main/java/com/ldpst/beans/CheckerBean.java"
-            tofile="${alt.work.dir}/main/java/com/ldpst/beans/AltCheckerBean.java"/>
-
-        <move file="${alt.work.dir}/main/java/com/ldpst/beans/ControllerBean.java"
-            tofile="${alt.work.dir}/main/java/com/ldpst/beans/AltControllerBean.java"/>
-
-        <move file="${alt.work.dir}/main/java/com/ldpst/beans/CurTimeBean.java"
-            tofile="${alt.work.dir}/main/java/com/ldpst/beans/AltCurTimeBean.java"/>
-
-        <move file="${alt.work.dir}/main/java/com/ldpst/beans/PointBean.java"
-            tofile="${alt.work.dir}/main/java/com/ldpst/beans/AltPointBean.java"/>
-
-        <move file="${alt.work.dir}/main/java/com/ldpst/utils/BigDecimalConverter.java"
-            tofile="${alt.work.dir}/main/java/com/ldpst/utils/AltBigDecimalConverter.java"/>
-
-        <move file="${alt.work.dir}/main/java/com/ldpst/utils/BigDecimalRangeValidator.java"
-            tofile="${alt.work.dir}/main/java/com/ldpst/utils/AltBigDecimalRangeValidator.java"/>
-
-        <move file="${alt.work.dir}/main/java/com/ldpst/utils/PointDAO.java"
-            tofile="${alt.work.dir}/main/java/com/ldpst/utils/AltPointDAO.java"/>
-
-        <move file="${alt.work.dir}/test/java/com/ldpst/beans/CheckerBeanTest.java"
-            tofile="${alt.work.dir}/test/java/com/ldpst/beans/AltCheckerBeanTest.java"/>
-
-        <delete dir="${src.general.dir}"/>
-
-        <copy todir="${src.general.dir}">
-            <fileset dir="${alt.work.dir}"/>
-        </copy>
-        
-        <antcall target="clean"/>
-        <antcall target="build"/>
-
-        <copy file="${art.dir}/${war.name}"
-            tofile="${art.dir}/alt-${war.name}"/>
-
-        <delete dir="${src.general.dir}"/>
-
-        <copy todir="${src.general.dir}">
-            <fileset dir="${alt.backup.dir}"/>
-        </copy>
-
-        <delete dir="${alt.work.dir}"/>
-        <delete dir="${alt.backup.dir}"/>
-        
-        <antcall target="clean"/>
+        <delete dir="${alt.dir}"/>
     </target>
 
     <!-- 12. Diff -->
@@ -500,7 +509,7 @@
             <arg value="--quiet"/>
             <arg value="${svn.repo.url}"/>
         </exec>
-        
+
         <echo message="svn log file created"/>
     </target>
 
@@ -526,85 +535,90 @@
     </target>
 
     <target name="history.iterate">
+        <var name="stop.iteration" value="false"/>
+        <var name="prev.rev" value=""/>
 
         <for list="${revs}" param="rev" delimiter=",">
             <sequential>
 
-                <echo>==============================</echo>
-                <echo>Checking revision @{rev}</echo>
-
-                <property name="current.work.dir" value="${work.base.dir}/rev-@{rev}"/>
-
-                <delete dir="${current.work.dir}" failonerror="false"/>
-                <mkdir dir="${current.work.dir}"/>
-
-                <exec executable="${svn.bin}" failonerror="true">
-                    <arg value="checkout"/>
-                    <arg value="-r"/>
-                    <arg value="@{rev}"/>
-                    <arg value="${svn.repo.url}"/>
-                    <arg value="${current.work.dir}"/>
-                </exec>
-
-                <delete file="${compile.marker}" failonerror="false"/>
-
-                <trycatch>
-                    <try>
-
-                        <ant dir="${basedir}" target="compile.subant" inheritAll="false">
-
-                            <property name="src.dir" value="${current.work.dir}/src/main/java"/>
-                            <property name="build.dir" value="${current.work.dir}/build/classes"/>
-                            <property name="lib.dir" value="${basedir}/lib"/>
-                            <property name="compile.marker" value="${current.work.dir}/compile.ok"/>
-
-                        </ant>
-
-                    </try>
-
-                    <catch>
-                        <echo>Compile FAILED for revision @{rev}</echo>
-                    </catch>
-                </trycatch>
-
-                <condition property="compile.success">
-                    <available file="${current.work.dir}/compile.ok"/>
-                </condition>
-
-                <echo>Compile success: ${compile.success}</echo>
-
                 <if>
-                    <isset property="compile.success"/>
+                    <equals arg1="${stop.iteration}" arg2="true"/>
                     <then>
+                        <echo>Skipping revision @{rev}</echo>
+                    </then>
+                    <else>
 
-                        <property name="good.rev" value="@{rev}"/>
+                        <echo>Checking revision @{rev}</echo>
 
-                        <echo>FOUND GOOD REVISION: ${good.rev}</echo>
+                        <var name="current.work.dir" value="${work.base.dir}/rev-@{rev}"/>
 
-                        <propertyregex property="bad.rev"
-                            input="${revs}"
-                            regexp=".*@{rev},([0-9]+).*"
-                            replace="\1"/>
+                        <delete dir="${current.work.dir}" failonerror="false"/>
+                        <mkdir dir="${current.work.dir}"/>
 
-                        <echo>First BAD revision: ${bad.rev}</echo>
-
-                        <exec executable="${svn.bin}" output="${history.result.file}">
-                            <arg value="diff"/>
+                        <exec executable="${svn.bin}" failonerror="true">
+                            <arg value="checkout"/>
                             <arg value="-r"/>
-                            <arg value="${good.rev}:${bad.rev}"/>
+                            <arg value="@{rev}"/>
                             <arg value="${svn.repo.url}"/>
+                            <arg value="${current.work.dir}"/>
                         </exec>
 
-                        <echo>Diff saved to ${history.result.file}</echo>
+                        <delete file="${current.work.dir}/compile.ok" failonerror="false"/>
+
+                        <trycatch>
+                            <try>
+
+                                <ant dir="${basedir}" target="compile.subant" inheritAll="false">
+                                    <property name="src.dir" value="${current.work.dir}/src/main/java"/>
+                                    <property name="build.dir" value="${current.work.dir}/build/classes"/>
+                                    <property name="lib.dir" value="${basedir}/lib"/>
+                                    <property name="compile.marker" value="${current.work.dir}/compile.ok"/>
+                                </ant>
+
+                            </try>
+
+                            <catch>
+                                <echo>Compile FAILED for revision @{rev}</echo>
+                            </catch>
+                        </trycatch>
+
+                        <condition property="compile.success.@{rev}">
+                            <available file="${current.work.dir}/compile.ok"/>
+                        </condition>
+
+                        <echo>Compile success: ${compile.success.@{rev}}</echo>
+
+                        <if>
+                            <isset property="compile.success.@{rev}"/>
+                            <then>
+                                <var name="good.rev" value="@{rev}"/>
+                                <var name="bad.rev" value="${prev.rev}"/>
+
+                                <echo>FOUND GOOD REVISION: ${good.rev}</echo>
+                                <echo>First BAD revision: ${bad.rev}</echo>
+
+                                <exec executable="${svn.bin}" output="${history.result.file}">
+                                    <arg value="diff"/>
+                                    <arg value="-r"/>
+                                    <arg value="${good.rev}:${bad.rev}"/>
+                                    <arg value="${svn.repo.url}"/>
+                                </exec>
+
+                                <echo>Diff saved to ${history.result.file}</echo>
+
+                                <var name="stop.iteration" value="true"/>
+
+                            </then>
+
+                            <else>
+                                <var name="prev.rev" value="@{rev}"/>
+                            </else>
+                        </if>
 
                         <delete dir="${current.work.dir}" failonerror="false"/>
 
-                        <break/>
-
-                    </then>
+                    </else>
                 </if>
-
-                <delete dir="${current.work.dir}" failonerror="false"/>
 
             </sequential>
         </for>
@@ -641,7 +655,6 @@
 
     <!-- 14. Report -->
     <target name="report" depends="test" if="tests.passed">
-        <echo message="zxc"/>
         <exec executable="git">
             <arg value="add"/>
             <arg value="${test.reports.dir}/*.xml"/>
