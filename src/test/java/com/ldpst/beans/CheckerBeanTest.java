@@ -2,172 +2,50 @@ package com.ldpst.beans;
 
 import java.math.BigDecimal;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 public class CheckerBeanTest {
-    public CheckerBeanTest() {}
-    
-    @Test
-    public void testCheck() {
 
-        CheckerBean checkerBean = new CheckerBean();
-        
-        assertTrue(checkerBean.check(
-            new BigDecimal(-0.5), 
-            new BigDecimal(-1), 
-            new BigDecimal(1))
-        );
+    private CheckerBean checkerBean;
 
-        assertTrue(checkerBean.check(
-            new BigDecimal(-0.5), 
-            new BigDecimal(0), 
-            new BigDecimal(1))
-        );
+    @BeforeEach
+    void setUp() {
+        checkerBean = new CheckerBean();
+    }
 
-        assertTrue(checkerBean.check(
-            new BigDecimal(-0.3), 
-            new BigDecimal(0.3), 
-            new BigDecimal(1))
-        );
+    @ParameterizedTest(name = "[{index}] Ожидается {0} для x={1}, y={2}, r={3}")
+    @CsvSource({
 
-        assertTrue(checkerBean.check(
-            new BigDecimal(0), 
-            new BigDecimal(0.5), 
-            new BigDecimal(1))
-        );
+            "true,  -0.5,  -1,    1",
+            "true,  -0.5,   0,    1",
+            "true,  -0.3,   0.3,  1",
+            "true,   0,     0.5,  1",
+            "true,   1,     0,    1",
+            "true,   0.5,  -0.5,  1",
+            "true,   0,    -1,    1",
+            "true,  -0.25, -0.5,  1",
+            "true,  -0.25,  0.25, 1",
+            "false, -0.6,   0.6,  1",
+            "false,  0.1,   0.1,  1",
+            "false,  0.6,  -0.6,  1",
 
-        assertTrue(checkerBean.check(
-            new BigDecimal(1), 
-            new BigDecimal(0), 
-            new BigDecimal(1))
-        );
-
-        assertTrue(checkerBean.check(
-            new BigDecimal(0.5), 
-            new BigDecimal(-0.5), 
-            new BigDecimal(1))
-        );
-
-        assertTrue(checkerBean.check(
-            new BigDecimal(0), 
-            new BigDecimal(-1), 
-            new BigDecimal(1))
-        );
-        
-        assertTrue(checkerBean.check(
-            new BigDecimal(-0.25), 
-            new BigDecimal(-0.5), 
-            new BigDecimal(1))
-        );
-
-        assertTrue(checkerBean.check(
-            new BigDecimal(-0.25), 
-            new BigDecimal(0.25), 
-            new BigDecimal(1))
-        );
-
-        assertFalse(checkerBean.check(
-            new BigDecimal(-0.6), 
-            new BigDecimal(0.6), 
-            new BigDecimal(1))
-        );
-
-        assertFalse(checkerBean.check(
-            new BigDecimal(-0.6), 
-            new BigDecimal(0.6), 
-            new BigDecimal(1))
-        );
-
-        assertFalse(checkerBean.check(
-            new BigDecimal(0.1), 
-            new BigDecimal(0.1), 
-            new BigDecimal(1))
-        );
-
-        assertFalse(checkerBean.check(
-            new BigDecimal(0.6), 
-            new BigDecimal(-0.6), 
-            new BigDecimal(1))
-        );
-        
-        assertTrue(checkerBean.check(
-                new BigDecimal(-1.25),
-                new BigDecimal(-2.5),
-                new BigDecimal(2.5)
-        ));
-
-        assertTrue(checkerBean.check(
-                new BigDecimal(-1.25),
-                new BigDecimal(0),
-                new BigDecimal(2.5)
-        ));
-
-        assertFalse(checkerBean.check(
-                new BigDecimal(-1.0),
-                new BigDecimal(1.0),
-                new BigDecimal(2.5)
-        ));
-
-        assertTrue(checkerBean.check(
-                new BigDecimal(0),
-                new BigDecimal(1.25),
-                new BigDecimal(2.5)
-        ));
-
-        assertTrue(checkerBean.check(
-                new BigDecimal(2.5),
-                new BigDecimal(0),
-                new BigDecimal(2.5)
-        ));
-
-        assertTrue(checkerBean.check(
-                new BigDecimal(1.25),
-                new BigDecimal(-1.25),
-                new BigDecimal(2.5)
-        ));
-
-        assertTrue(checkerBean.check(
-                new BigDecimal(0),
-                new BigDecimal(-2.5),
-                new BigDecimal(2.5)
-        ));
-
-        assertTrue(checkerBean.check(
-                new BigDecimal(-0.625),
-                new BigDecimal(-1.25),
-                new BigDecimal(2.5)
-        ));
-
-        assertTrue(checkerBean.check(
-                new BigDecimal(-0.625),
-                new BigDecimal(0.625),
-                new BigDecimal(2.5)
-        ));
-
-        assertFalse(checkerBean.check(
-                new BigDecimal(-1.5),
-                new BigDecimal(1.5),
-                new BigDecimal(2.5)
-        ));
-
-        assertFalse(checkerBean.check(
-                new BigDecimal(-1.5),
-                new BigDecimal(1.5),
-                new BigDecimal(2.5)
-        ));
-
-        assertFalse(checkerBean.check(
-                new BigDecimal(0.25),
-                new BigDecimal(0.25),
-                new BigDecimal(2.5)
-        ));
-
-        assertFalse(checkerBean.check(
-                new BigDecimal(1.5),
-                new BigDecimal(-1.5),
-                new BigDecimal(2.5)
-        ));
+            "true,  -1.25, -2.5,  2.5",
+            "true,  -1.25,  0,    2.5",
+            "false, -1.0,   1.0,  2.5",
+            "true,   0,     1.25, 2.5",
+            "true,   2.5,   0,    2.5",
+            "true,   1.25, -1.25, 2.5",
+            "true,   0,    -2.5,  2.5",
+            "true,  -0.625,-1.25, 2.5",
+            "true,  -0.625, 0.625,2.5",
+            "false, -1.5,   1.5,  2.5",
+            "false,  0.25,  0.25, 2.5",
+            "false,  1.5,  -1.5,  2.5"
+    })
+    void testCheck(boolean expected, BigDecimal x, BigDecimal y, BigDecimal r) {
+        assertEquals(expected, checkerBean.check(x, y, r));
     }
 }
