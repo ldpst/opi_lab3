@@ -83,7 +83,37 @@
         </war>
     </target>
 
-    <!-- 2.1 Deploy -->
+    <!-- 2.1 Build jar -->
+    <target name="buildJar" depends="compile,compileTests">
+        <mkdir dir="${art.dir}"/>
+        
+        <jar destfile="${art.dir}/${jar.name}">
+            <manifest>
+                <attribute name="Manifest-Version" value="1.0"/>
+                <attribute name="Implementation-Version" value="1.0.0"/>
+                <attribute name="Main-Class" value="com.ldpst.Main"/>
+            </manifest>
+
+            <fileset dir="${build.dir}"> 
+                <exclude name="classes/**"/>
+                <exclude name="generated/**"/>
+                <exclude name="resources/**"/>
+                <exclude name="libs/**"/>
+                <exclude name="tmp/**"/>
+                <exclude name="test-reports/**"/>
+            </fileset>
+
+            <zipfileset dir="${res.dir}" prefix="META-INF"/>
+
+            <zipfileset dir="${webcontent.dir}" prefix="webapp"/>
+            
+            <zipfileset file="${webcontent.dir}/${webxml.dest}" prefix="webapp/WEB-INF"/>
+
+            <zipgroupfileset dir="${lib.dir}" includes="**/*.jar" />
+        </jar>
+    </target>
+
+    <!-- 2.2 Deploy -->
     <target name="deploy" depends="build">
         <copy file="${art.dir}/${war.name}" todir="${wildfly.deploy.dir}"/>
     </target>
@@ -529,8 +559,6 @@
 
         <for list="${revs}" param="rev" delimiter=",">
             <sequential>
-
-                <echo>==============================</echo>
                 <echo>Checking revision @{rev}</echo>
 
                 <property name="current.work.dir" value="${work.base.dir}/rev-@{rev}"/>
