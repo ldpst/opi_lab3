@@ -8,6 +8,12 @@
             <pathelement location="${lib.dir}/ant-contrib-1.0b3.jar"/>
         </classpath>
     </taskdef>
+    
+    <taskdef resource="net/sf/antcontrib/antcontrib.properties">
+        <classpath>
+            <pathelement location="lib/ant-contrib-1.0b3.jar"/>
+        </classpath>
+    </taskdef>
 
     <!-- Импорт либ, которые украдены из кеша градла -->
     <path id="compile.classpath">
@@ -503,7 +509,7 @@
             <arg value="--quiet"/>
             <arg value="${svn.repo.url}"/>
         </exec>
-        
+
         <echo message="svn log file created"/>
     </target>
 
@@ -529,83 +535,90 @@
     </target>
 
     <target name="history.iterate">
+        <var name="stop.iteration" value="false"/>
+        <var name="prev.rev" value=""/>
 
         <for list="${revs}" param="rev" delimiter=",">
             <sequential>
-                <echo>Checking revision @{rev}</echo>
-
-                <property name="current.work.dir" value="${work.base.dir}/rev-@{rev}"/>
-
-                <delete dir="${current.work.dir}" failonerror="false"/>
-                <mkdir dir="${current.work.dir}"/>
-
-                <exec executable="${svn.bin}" failonerror="true">
-                    <arg value="checkout"/>
-                    <arg value="-r"/>
-                    <arg value="@{rev}"/>
-                    <arg value="${svn.repo.url}"/>
-                    <arg value="${current.work.dir}"/>
-                </exec>
-
-                <delete file="${compile.marker}" failonerror="false"/>
-
-                <trycatch>
-                    <try>
-
-                        <ant dir="${basedir}" target="compile.subant" inheritAll="false">
-
-                            <property name="src.dir" value="${current.work.dir}/src/main/java"/>
-                            <property name="build.dir" value="${current.work.dir}/build/classes"/>
-                            <property name="lib.dir" value="${basedir}/lib"/>
-                            <property name="compile.marker" value="${current.work.dir}/compile.ok"/>
-
-                        </ant>
-
-                    </try>
-
-                    <catch>
-                        <echo>Compile FAILED for revision @{rev}</echo>
-                    </catch>
-                </trycatch>
-
-                <condition property="compile.success">
-                    <available file="${current.work.dir}/compile.ok"/>
-                </condition>
-
-                <echo>Compile success: ${compile.success}</echo>
 
                 <if>
-                    <isset property="compile.success"/>
+                    <equals arg1="${stop.iteration}" arg2="true"/>
                     <then>
+                        <echo>Skipping revision @{rev}</echo>
+                    </then>
+                    <else>
 
-                        <property name="good.rev" value="@{rev}"/>
+                        <echo>Checking revision @{rev}</echo>
 
-                        <echo>FOUND GOOD REVISION: ${good.rev}</echo>
+                        <var name="current.work.dir" value="${work.base.dir}/rev-@{rev}"/>
 
-                        <propertyregex property="bad.rev"
-                            input="${revs}"
-                            regexp=".*@{rev},([0-9]+).*"
-                            replace="\1"/>
+                        <delete dir="${current.work.dir}" failonerror="false"/>
+                        <mkdir dir="${current.work.dir}"/>
 
-                        <echo>First BAD revision: ${bad.rev}</echo>
-
-                        <exec executable="${svn.bin}" output="${history.result.file}">
-                            <arg value="diff"/>
+                        <exec executable="${svn.bin}" failonerror="true">
+                            <arg value="checkout"/>
                             <arg value="-r"/>
-                            <arg value="${good.rev}:${bad.rev}"/>
+                            <arg value="@{rev}"/>
                             <arg value="${svn.repo.url}"/>
+                            <arg value="${current.work.dir}"/>
                         </exec>
 
-                        <echo>Diff saved to ${history.result.file}</echo>
+                        <delete file="${current.work.dir}/compile.ok" failonerror="false"/>
+
+                        <trycatch>
+                            <try>
+
+                                <ant dir="${basedir}" target="compile.subant" inheritAll="false">
+                                    <property name="src.dir" value="${current.work.dir}/src/main/java"/>
+                                    <property name="build.dir" value="${current.work.dir}/build/classes"/>
+                                    <property name="lib.dir" value="${basedir}/lib"/>
+                                    <property name="compile.marker" value="${current.work.dir}/compile.ok"/>
+                                </ant>
+
+                            </try>
+
+                            <catch>
+                                <echo>Compile FAILED for revision @{rev}</echo>
+                            </catch>
+                        </trycatch>
+
+                        <condition property="compile.success.@{rev}">
+                            <available file="${current.work.dir}/compile.ok"/>
+                        </condition>
+
+                        <echo>Compile success: ${compile.success.@{rev}}</echo>
+
+                        <if>
+                            <isset property="compile.success.@{rev}"/>
+                            <then>
+                                <var name="good.rev" value="@{rev}"/>
+                                <var name="bad.rev" value="${prev.rev}"/>
+
+                                <echo>FOUND GOOD REVISION: ${good.rev}</echo>
+                                <echo>First BAD revision: ${bad.rev}</echo>
+
+                                <exec executable="${svn.bin}" output="${history.result.file}">
+                                    <arg value="diff"/>
+                                    <arg value="-r"/>
+                                    <arg value="${good.rev}:${bad.rev}"/>
+                                    <arg value="${svn.repo.url}"/>
+                                </exec>
+
+                                <echo>Diff saved to ${history.result.file}</echo>
+
+                                <var name="stop.iteration" value="true"/>
+
+                            </then>
+
+                            <else>
+                                <var name="prev.rev" value="@{rev}"/>
+                            </else>
+                        </if>
 
                         <delete dir="${current.work.dir}" failonerror="false"/>
 
-                        <break/>
-
-                    </then>
+                    </else>
                 </if>
-
-                <delete dir="${current.work.dir}" failonerror="false"/>
 
             </sequential>
         </for>
