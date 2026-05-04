@@ -377,83 +377,53 @@
 
     <!-- 11. Alt -->
     <target name="alt">
-        <delete dir="${alt.backup.dir}"/>
-        <delete dir="${alt.work.dir}"/>
+        <delete dir="${alt.dir}"/>
+        <mkdir dir="${alt.src.dir}"/>
+        <mkdir dir="${alt.resources.dir}"/>
+        <mkdir dir="${alt.webapp.dir}"/>
+        <mkdir dir="${alt.build.dir}"/>
 
-        <mkdir dir="${alt.backup.dir}"/>
-        <copy todir="${alt.backup.dir}">
-            <fileset dir="${src.general.dir}"/>
+        <copy todir="${alt.src.dir}">
+            <fileset dir="${java.dir}"/>
+        </copy>
+        <copy todir="${alt.resources.dir}">
+            <fileset dir="${resources.dir}"/>
+        </copy>
+        <copy todir="${alt.webapp.dir}">
+            <fileset dir="${webapp.dir}"/>
+        </copy>
+        <copy todir="${alt.test.dir}">
+            <fileset dir="${src.test.dir}"/>
         </copy>
 
-        <mkdir dir="${alt.work.dir}"/>
-        <copy todir="${alt.work.dir}">
-            <fileset dir="${src.general.dir}"/>
-        </copy>
-
-        <loadproperties srcFile="${alt.replace.file}"/>
-
-        <replaceregexp byline="true" flags="g">
-            <fileset dir="${alt.work.dir}">
+        <replace dir="${alt.dir}" replacefilterfile="${alt.replace.file}" encoding="UTF-8"/>
+        
+        <move todir="${alt.src.dir}" includeemptydirs="false">
+            <fileset dir="${alt.src.dir}">
                 <include name="**/*.java"/>
-                <include name="**/*.xml"/>
             </fileset>
+            <mapper type="regexp" from="^(.*[\\/])?(${alt.classes.list})\.java$$" to="\1Alt\2.java"/>
+        </move>
 
-            <regexp pattern="\b(PlaySound|CheckerBean|CheckerBeanTest|ControllerBean|CurTimeBean|PointBean|BigDecimalConverter|BigDecimalRangeValidator|PointDAO|Main)\b"/>
-            <substitution expression="Alt\1"/>
-        </replaceregexp>
+        <move todir="${alt.test.dir}" includeemptydirs="false">
+            <fileset dir="${alt.test.dir}">
+                <include name="**/*.java"/>
+            </fileset>
+            <mapper type="regexp" from="^(.*[\\/])?(${alt.classes.list})\.java$$" to="\1Alt\2.java"/>
+        </move>
 
-        <move file="${alt.work.dir}/main/java/com/ldpst/Main.java"
-            tofile="${alt.work.dir}/main/java/com/ldpst/AltMain.java"/>
+        <antcall target="build">
+            <param name="java.dir" value="${alt.src.dir}"/>
+            <param name="src.dir" value="${alt.dir}"/> 
+            <param name="build.dir" value="${alt.build.dir}"/>
+            <param name="src.test.dir" value="${alt.test.dir}"/>
+            <param name="build.test.dir" value="${alt.build.test.dir}"/>
+            <param name="res.dir" value="${alt.resources.dir}"/>
+            <param name="webcontent.dir" value="${alt.webapp.dir}"/>
+            <param name="war.name" value="${alt.war.name}"/>
+        </antcall>
 
-        <move file="${alt.work.dir}/main/java/com/ldpst/ant/PlaySound.java"
-            tofile="${alt.work.dir}/main/java/com/ldpst/ant/AltPlaySound.java"/>
-
-        <move file="${alt.work.dir}/main/java/com/ldpst/beans/CheckerBean.java"
-            tofile="${alt.work.dir}/main/java/com/ldpst/beans/AltCheckerBean.java"/>
-
-        <move file="${alt.work.dir}/main/java/com/ldpst/beans/ControllerBean.java"
-            tofile="${alt.work.dir}/main/java/com/ldpst/beans/AltControllerBean.java"/>
-
-        <move file="${alt.work.dir}/main/java/com/ldpst/beans/CurTimeBean.java"
-            tofile="${alt.work.dir}/main/java/com/ldpst/beans/AltCurTimeBean.java"/>
-
-        <move file="${alt.work.dir}/main/java/com/ldpst/beans/PointBean.java"
-            tofile="${alt.work.dir}/main/java/com/ldpst/beans/AltPointBean.java"/>
-
-        <move file="${alt.work.dir}/main/java/com/ldpst/utils/BigDecimalConverter.java"
-            tofile="${alt.work.dir}/main/java/com/ldpst/utils/AltBigDecimalConverter.java"/>
-
-        <move file="${alt.work.dir}/main/java/com/ldpst/utils/BigDecimalRangeValidator.java"
-            tofile="${alt.work.dir}/main/java/com/ldpst/utils/AltBigDecimalRangeValidator.java"/>
-
-        <move file="${alt.work.dir}/main/java/com/ldpst/utils/PointDAO.java"
-            tofile="${alt.work.dir}/main/java/com/ldpst/utils/AltPointDAO.java"/>
-
-        <move file="${alt.work.dir}/test/java/com/ldpst/beans/CheckerBeanTest.java"
-            tofile="${alt.work.dir}/test/java/com/ldpst/beans/AltCheckerBeanTest.java"/>
-
-        <delete dir="${src.general.dir}"/>
-
-        <copy todir="${src.general.dir}">
-            <fileset dir="${alt.work.dir}"/>
-        </copy>
-        
-        <antcall target="clean"/>
-        <antcall target="build"/>
-
-        <copy file="${art.dir}/${war.name}"
-            tofile="${art.dir}/alt-${war.name}"/>
-
-        <delete dir="${src.general.dir}"/>
-
-        <copy todir="${src.general.dir}">
-            <fileset dir="${alt.backup.dir}"/>
-        </copy>
-
-        <delete dir="${alt.work.dir}"/>
-        <delete dir="${alt.backup.dir}"/>
-        
-        <antcall target="clean"/>
+        <delete dir="${alt.dir}"/>
     </target>
 
     <!-- 12. Diff -->
