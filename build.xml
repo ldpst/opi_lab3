@@ -34,6 +34,7 @@
                executable="${javac.exec}">
             <classpath refid="compile.classpath"/>
         </javac>
+        <mkdir dir="${temp.dir}"/>
         <touch file="${compile.marker}"/>
     </target>
 
@@ -128,6 +129,7 @@
     <target name="clean">
         <delete dir="${build.dir}"/>
         <delete dir="${build.test.dir}"/>
+        <delete dir="${temp.dir}"/>
     </target>
 
     <!-- 4. Test -->

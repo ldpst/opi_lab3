@@ -49,3 +49,5 @@ bin/
 .DS_Store
 
 .svn/
+
+tmp

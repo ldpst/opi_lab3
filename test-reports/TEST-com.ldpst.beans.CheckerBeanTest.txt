@@ -1,0 +1,76 @@
+Testcase: com.ldpst.beans.CheckerBeanTest
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[1] took 31 milli sec(s)
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[2] took 1 milli sec(s)
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[3] took 1 milli sec(s)
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[4] took 1 milli sec(s)
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[5] took 1 milli sec(s)
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[6] took 2 milli sec(s)
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[7] took 1 milli sec(s)
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[8] took 1 milli sec(s)
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[9] took 0 milli sec(s)
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[10] took 0 milli sec(s)
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[11] took 1 milli sec(s)
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[12] took 0 milli sec(s)
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[13] took 1 milli sec(s)
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[14] took 1 milli sec(s)
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[15] took 0 milli sec(s)
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[16] took 0 milli sec(s)
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[17] took 1 milli sec(s)
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[18] took 0 milli sec(s)
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[19] took 0 milli sec(s)
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[20] took 1 milli sec(s)
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[21] took 0 milli sec(s)
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[22] took 1 milli sec(s)
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[23] took 1 milli sec(s)
+Test: testCheck(boolean, BigDecimal, BigDecimal, BigDecimal)[24] took 0 milli sec(s)
+Tests run: 24, Failures: 0, Skipped: 0, Aborted: 0, Time elapsed: 157 milli sec(s)
+------------- Standard Output ---------------
+Checking: x=-0.5, y=-1, r=1
+Results - Triangle: false, Rectangle: true, Circle: false, Final: true
+Checking: x=-0.5, y=0, r=1
+Results - Triangle: false, Rectangle: true, Circle: true, Final: true
+Checking: x=-0.3, y=0.3, r=1
+Results - Triangle: false, Rectangle: false, Circle: true, Final: true
+Checking: x=0, y=0.5, r=1
+Results - Triangle: false, Rectangle: false, Circle: true, Final: true
+Checking: x=1, y=0, r=1
+Results - Triangle: true, Rectangle: false, Circle: false, Final: true
+Checking: x=0.5, y=-0.5, r=1
+Results - Triangle: true, Rectangle: false, Circle: false, Final: true
+Checking: x=0, y=-1, r=1
+Results - Triangle: true, Rectangle: true, Circle: false, Final: true
+Checking: x=-0.25, y=-0.5, r=1
+Results - Triangle: false, Rectangle: true, Circle: false, Final: true
+Checking: x=-0.25, y=0.25, r=1
+Results - Triangle: false, Rectangle: false, Circle: true, Final: true
+Checking: x=-0.6, y=0.6, r=1
+Results - Triangle: false, Rectangle: false, Circle: false, Final: false
+Checking: x=0.1, y=0.1, r=1
+Results - Triangle: false, Rectangle: false, Circle: false, Final: false
+Checking: x=0.6, y=-0.6, r=1
+Results - Triangle: false, Rectangle: false, Circle: false, Final: false
+Checking: x=-1.25, y=-2.5, r=2.5
+Results - Triangle: false, Rectangle: true, Circle: false, Final: true
+Checking: x=-1.25, y=0, r=2.5
+Results - Triangle: false, Rectangle: true, Circle: true, Final: true
+Checking: x=-1.0, y=1.0, r=2.5
+Results - Triangle: false, Rectangle: false, Circle: false, Final: false
+Checking: x=0, y=1.25, r=2.5
+Results - Triangle: false, Rectangle: false, Circle: true, Final: true
+Checking: x=2.5, y=0, r=2.5
+Results - Triangle: true, Rectangle: false, Circle: false, Final: true
+Checking: x=1.25, y=-1.25, r=2.5
+Results - Triangle: true, Rectangle: false, Circle: false, Final: true
+Checking: x=0, y=-2.5, r=2.5
+Results - Triangle: true, Rectangle: true, Circle: false, Final: true
+Checking: x=-0.625, y=-1.25, r=2.5
+Results - Triangle: false, Rectangle: true, Circle: false, Final: true
+Checking: x=-0.625, y=0.625, r=2.5
+Results - Triangle: false, Rectangle: false, Circle: true, Final: true
+Checking: x=-1.5, y=1.5, r=2.5
+Results - Triangle: false, Rectangle: false, Circle: false, Final: false
+Checking: x=0.25, y=0.25, r=2.5
+Results - Triangle: false, Rectangle: false, Circle: false, Final: false
+Checking: x=1.5, y=-1.5, r=2.5
+Results - Triangle: false, Rectangle: false, Circle: false, Final: false
+------------- ---------------- ---------------
