@@ -434,7 +434,7 @@
             <param name="war.name" value="${alt.war.name}"/>
         </antcall>
 
-        <delete dir="${alt.dir}"/>
+        <!-- <delete dir="${alt.dir}"/> -->
     </target>
 
     <!-- 12. Diff -->
@@ -445,11 +445,8 @@
             <arg value="status"/>
         </exec>
 
-        <loadfile property="svn.status.content"
-                srcFile="${svn.status.file}" />
-
-        <loadfile property="svn.watch.content"
-                srcFile="${svn.watch.file}" />
+        <loadfile property="svn.status.content" srcFile="${svn.status.file}" />
+        <loadfile property="svn.watch.content" srcFile="${svn.watch.file}" />
 
         <echo message="=== SVN STATUS ==="/>
         <echo message="${svn.status.content}"/>
@@ -458,40 +455,46 @@
         <echo message="${svn.watch.content}"/>
 
         <var name="svn.need.commit" value="false"/>
+        <var name="svn.commit.files" value=""/>
 
         <for list="${svn.watch.content}"
             delimiter="${line.separator}"
             param="watchedFile">
 
             <sequential>
-                <echo message="Checking: @{watchedFile}" />
-
-                <condition property="match.@{watchedFile}">
-                    <contains string="${svn.status.content}"
-                            substring="@{watchedFile}" />
-                </condition>
-
                 <if>
-                    <isset property="match.@{watchedFile}"/>
+                    <not><equals arg1="@{watchedFile}" arg2=""/></not>
                     <then>
-                        <echo message="CHANGED: @{watchedFile}" />
-                        <var name="svn.need.commit" value="true"/>
+                        <echo message="Checking: @{watchedFile}" />
+                        <propertyregex property="matched.file.path"
+                                    input="${svn.status.content}"
+                                    regexp="(?m)^.{1,8}\s+(.*@{watchedFile}.*?)\s*$"
+                                    select="\1"
+                                    override="true" />
+
+                        <if>
+                            <isset property="matched.file.path"/>
+                            <then>
+                                <echo message="CHANGED FOUND: ${matched.file.path}" />
+                                <var name="svn.need.commit" value="true"/>
+                                <var name="svn.commit.files" value="${svn.commit.files} &quot;${matched.file.path}&quot;"/>
+                            </then>
+                        </if>
                     </then>
                 </if>
-
             </sequential>
-
         </for>
 
         <if>
             <equals arg1="${svn.need.commit}" arg2="true"/>
             <then>
-                <echo message="Commit" />
+                <echo message="Committing files: ${svn.commit.files}" />
 
                 <exec executable="${svn.bin}">
                     <arg value="commit"/>
                     <arg value="-m"/>
                     <arg value="${svn.msg}"/>
+                    <arg line="${svn.commit.files}"/>
                 </exec>
             </then>
 

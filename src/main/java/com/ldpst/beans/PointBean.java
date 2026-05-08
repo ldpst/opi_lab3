@@ -1,13 +1,14 @@
 package com.ldpst.beans;
 
-import com.ldpst.entity.Point;
-import jakarta.enterprise.context.SessionScoped;
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import com.ldpst.entity.Point;
+
+import jakarta.enterprise.context.SessionScoped;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 
 @Named("point")
 @SessionScoped
